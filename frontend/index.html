@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PRISM — Potential Ranking</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0f1e;
+      --panel: rgba(255, 255, 255, 0.07);
+      --text: #ffffff;
+      --muted: #94a3b8;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --green: #22c55e;
+      --gold: #fbbf24;
+      --red: #fb7185;
+    }
+
+    body.light {
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 0%, rgba(59, 130, 246, 0.25), transparent 30%),
+        linear-gradient(135deg, var(--bg), #111827);
+      transition: 0.3s;
+    }
+
+    .top {
+      position: fixed;
+      top: 16px;
+      right: 20px;
+      z-index: 5;
+      display: flex;
+      gap: 10px;
+    }
+
+    .badge,
+    .toggle {
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 999px;
+      padding: 9px 14px;
+      color: var(--text);
+      background: var(--panel);
+      font-weight: 700;
+      backdrop-filter: blur(14px);
+    }
+
+    .toggle { cursor: pointer; }
+
+    .wrap {
+      max-width: 1260px;
+      margin: auto;
+      padding: 54px 20px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    .glass {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 28px;
+      padding: 28px;
+      background: var(--panel);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(18px);
+    }
+
+    .logo {
+      font-size: 64px;
+      line-height: 0.9;
+      font-weight: 900;
+      letter-spacing: -5px;
+      color: transparent;
+      background: linear-gradient(90deg, #ffffff, var(--blue), var(--purple));
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+
+    .tag {
+      margin: 18px 0;
+      color: var(--text);
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1.15;
+    }
+
+    .muted { color: var(--muted); }
+
+    textarea {
+      width: 100%;
+      min-height: 170px;
+      resize: vertical;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 20px;
+      padding: 18px;
+      color: var(--text);
+      background: rgba(0, 0, 0, 0.2);
+      font: inherit;
+    }
+
+    .drop {
+      margin: 14px 0;
+      border: 1.5px dashed rgba(59, 130, 246, 0.55);
+      border-radius: 22px;
+      padding: 28px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.25s;
+    }
+
+    .drop:hover,
+    .drop.drag {
+      transform: translateY(-2px);
+      background: rgba(59, 130, 246, 0.12);
+    }
+
+    button.primary {
+      width: 100%;
+      border: 0;
+      border-radius: 18px;
+      padding: 17px 22px;
+      color: #ffffff;
+      background: linear-gradient(90deg, var(--blue), var(--purple));
+      box-shadow: 0 0 30px rgba(59, 130, 246, 0.38);
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: 0.25s;
+    }
+
+    button.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 48px rgba(59, 130, 246, 0.6);
+    }
+
+    .paste { display: none; }
+    .paste.show { display: block; }
+    .hidden { display: none !important; }
+
+    .processing { margin-top: 24px; }
+
+    .agents {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .agent {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.06);
+      transition: 0.25s;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin-right: 8px;
+      border-radius: 50%;
+      background: #64748b;
+    }
+
+    .agent.run {
+      border-color: var(--blue);
+      box-shadow: 0 0 28px rgba(59, 130, 246, 0.25);
+    }
+
+    .agent.run .dot {
+      background: var(--blue);
+      animation: pulse 1s infinite;
+    }
+
+    .agent.done .dot { background: var(--green); }
+
+    @keyframes pulse {
+      50% { transform: scale(1.5); opacity: 0.55; }
+    }
+
+    .bar {
+      height: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.09);
+    }
+
+    .bar > span {
+      display: block;
+      width: 0;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--blue), var(--green));
+      transition: 0.35s;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 22px;
+      margin-top: 24px;
+    }
+
+    .list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .card {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 22px;
+      padding: 18px;
+      background: var(--panel);
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .card:hover,
+    .card.active {
+      transform: translateY(-4px);
+      border-color: rgba(59, 130, 246, 0.65);
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .score {
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .tier {
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .Exceptional { color: var(--gold); background: rgba(251, 191, 36, 0.2); }
+    .Strong { color: #93c5fd; background: rgba(59, 130, 246, 0.2); }
+    .Promising { color: #86efac; background: rgba(34, 197, 94, 0.18); }
+    .Developing { color: #cbd5e1; background: rgba(148, 163, 184, 0.18); }
+
+    .pill {
+      display: inline-block;
+      margin: 5px 4px 0 0;
+      border-radius: 999px;
+      padding: 7px 10px;
+      color: #bfdbfe;
+      background: rgba(59, 130, 246, 0.13);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .tagpill { color: #ddd6fe; background: rgba(139, 92, 246, 0.18); }
+    .good { color: #86efac; background: rgba(34, 197, 94, 0.15); }
+    .bad { color: #fecdd3; background: rgba(251, 113, 133, 0.15); }
+
+    .detail {
+      position: sticky;
+      top: 70px;
+      min-height: 620px;
+    }
+
+    .bigscore {
+      font-size: 76px;
+      font-weight: 900;
+      letter-spacing: -4px;
+    }
+
+    .confidence {
+      border-radius: 999px;
+      padding: 9px 12px;
+      color: #86efac;
+      background: rgba(34, 197, 94, 0.14);
+      font-weight: 900;
+    }
+
+    .scores {
+      display: grid;
+      gap: 10px;
+    }
+
+    .scorebar label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+    }
+
+    .scorebar span {
+      display: block;
+      width: 0;
+      height: 9px;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--blue), var(--purple));
+      transition: 0.7s;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      max-width: 420px;
+      height: 360px;
+      margin: auto;
+    }
+
+    .empty {
+      display: grid;
+      min-height: 520px;
+      place-items: center;
+      color: var(--muted);
+      text-align: center;
+      font-size: 22px;
+    }
+
+    @media (max-width: 900px) {
+      .hero,
+      .dashboard { grid-template-columns: 1fr; }
+      .agents { grid-template-columns: 1fr 1fr; }
+      .logo { font-size: 48px; }
+      .detail { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <span id="modeBadge" class="badge">🔒 Local Mode</span>
+    <button id="themeToggle" class="toggle">☀️/🌙</button>
+  </div>
+
+  <main class="wrap">
+    <section class="hero">
+      <div class="glass">
+        <div class="logo">PRISM</div>
+        <div class="tag">Find India's hidden talent.<br>Predict potential, not pedigree.</div>
+        <p class="muted">An AI hiring intelligence engine that predicts 6-month success using skill evidence, learning velocity, problem complexity, communication clarity, and potential.</p>
+        <textarea id="jobDescription" placeholder="Senior Backend Engineer at a Bangalore product startup. Requires Python, FastAPI, PostgreSQL, system design experience..."></textarea>
+      </div>
+
+      <div class="glass">
+        <h2>Candidate Dataset</h2>
+        <div id="dropZone" class="drop">
+          <strong>Drop CSV/JSON here</strong>
+          <p class="muted">or click to choose. Sample data loads automatically.</p>
+          <input id="fileInput" type="file" accept=".json,.csv" hidden>
+        </div>
+        <button id="pasteToggle" class="toggle">Paste JSON directly</button>
+        <textarea id="pasteInput" class="paste" placeholder='[{"id":"c001","name":"..."}]'></textarea>
+        <p id="candidateCount" class="muted">Loading sample dataset...</p>
+        <button id="analyzeButton" class="primary">Analyze Candidates</button>
+      </div>
+    </section>
+
+    <section id="processing" class="processing glass hidden">
+      <h2>Five agents are analyzing potential...</h2>
+      <div id="agents" class="agents"></div>
+      <div class="bar"><span id="progressBar"></span></div>
+      <p id="statusText" class="muted">Loading SBERT model...</p>
+    </section>
+
+    <section id="results" class="dashboard hidden">
+      <div id="candidateList" class="list"></div>
+      <div id="detailPanel" class="detail glass">
+        <div class="empty">← Select a candidate to see full analysis</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const agentNames = [
+      ['🔍', 'Skill'],
+      ['⚡', 'Velocity'],
+      ['🧩', 'Problem'],
+      ['💬', 'Comms'],
+      ['🎯', 'Potential']
+    ];
+
+    const state = {
+      candidates: [],
+      ranked: [],
+      detailCache: new Map(),
+      averages: {}
+    };
+
+    const ui = {
+      modeBadge: document.getElementById('modeBadge'),
+      themeToggle: document.getElementById('themeToggle'),
+      jobDescription: document.getElementById('jobDescription'),
+      dropZone: document.getElementById('dropZone'),
+      fileInput: document.getElementById('fileInput'),
+      pasteToggle: document.getElementById('pasteToggle'),
+      pasteInput: document.getElementById('pasteInput'),
+      candidateCount: document.getElementById('candidateCount'),
+      analyzeButton: document.getElementById('analyzeButton'),
+      processing: document.getElementById('processing'),
+      agents: document.getElementById('agents'),
+      progressBar: document.getElementById('progressBar'),
+      statusText: document.getElementById('statusText'),
+      results: document.getElementById('results'),
+      candidateList: document.getElementById('candidateList'),
+      detailPanel: document.getElementById('detailPanel')
+    };
+
+    ui.jobDescription.value = 'Senior Backend Engineer at a Bangalore product startup. Requires Python, FastAPI, PostgreSQL, system design experience, REST APIs, distributed systems thinking, ownership culture, and ability to work in an 8-person fast-paced engineering team.';
+
+    ui.themeToggle.addEventListener('click', () => document.body.classList.toggle('light'));
+    ui.pasteToggle.addEventListener('click', () => ui.pasteInput.classList.toggle('show'));
+    ui.dropZone.addEventListener('click', () => ui.fileInput.click());
+    ui.dropZone.addEventListener('dragover', event => {
+      event.preventDefault();
+      ui.dropZone.classList.add('drag');
+    });
+    ui.dropZone.addEventListener('dragleave', () => ui.dropZone.classList.remove('drag'));
+    ui.dropZone.addEventListener('drop', event => {
+      event.preventDefault();
+      ui.dropZone.classList.remove('drag');
+      readUploadedFile(event.dataTransfer.files[0]);
+    });
+    ui.fileInput.addEventListener('change', event => readUploadedFile(event.target.files[0]));
+    ui.analyzeButton.addEventListener('click', analyzeCandidates);
+
+    boot();
+
+    async function boot() {
+      await loadModeBadge();
+      await loadSampleCandidates();
+    }
+
+    async function loadModeBadge() {
+      try {
+        const health = await fetch('/health').then(response => response.json());
+        ui.modeBadge.textContent = health.mode === 'enhanced' ? '⚡ AI Enhanced' : '🔒 Local Mode';
+      } catch (error) {
+        ui.modeBadge.textContent = '🔒 Local Mode';
+      }
+    }
+
+    async function loadSampleCandidates() {
+      try {
+        state.candidates = await fetch('/data/sample_dataset.json').then(response => response.json());
+        ui.candidateCount.textContent = `${state.candidates.length} sample candidates ready`;
+      } catch (error) {
+        ui.candidateCount.textContent = 'Paste or upload candidates to begin';
+      }
+    }
+
+    function readUploadedFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          state.candidates = parsed.candidates || parsed;
+          ui.candidateCount.textContent = `${state.candidates.length} candidates loaded from ${file.name}`;
+        } catch (error) {
+          ui.candidateCount.textContent = 'Could not parse file. JSON sample expected.';
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function setAgentProgress(activeIndex, status) {
+      ui.agents.innerHTML = agentNames.map((agent, index) => `
+        <div class="agent ${index < activeIndex ? 'done' : index === activeIndex ? 'run' : ''}">
+          <span class="dot"></span><b>${agent[0]} ${agent[1]}</b>
+          <p class="muted">${index < activeIndex ? 'done' : index === activeIndex ? 'running' : 'waiting'}</p>
+        </div>
+      `).join('');
+      ui.progressBar.style.width = `${Math.min(100, (activeIndex + 1) * 16)}%`;
+      ui.statusText.textContent = status;
+    }
+
+    async function simulateProcessing() {
+      const statuses = [
+        'Loading SBERT model...',
+        'Extracting real skills...',
+        'Calculating career velocity...',
+        'Scoring problem complexity...',
+        'Evaluating communication clarity...',
+        'Predicting 6-month potential...',
+        'Ranking candidates...',
+        'Generating explanations...'
+      ];
+
+      for (let index = 0; index < 5; index += 1) {
+        setAgentProgress(index, statuses[index + 1]);
+        await new Promise(resolve => setTimeout(resolve, 360));
+      }
+    }
+
+    async function analyzeCandidates() {
+      const pastedJson = ui.pasteInput.value.trim();
+      if (pastedJson) {
+        try {
+          const parsed = JSON.parse(pastedJson);
+          state.candidates = parsed.candidates || parsed;
+        } catch (error) {
+          window.alert('Malformed pasted JSON');
+          return;
+        }
+      }
+
+      if (!state.candidates.length) {
+        window.alert('Load candidates first');
+        return;
+      }
+
+      ui.processing.classList.remove('hidden');
+      ui.results.classList.add('hidden');
+      state.detailCache.clear();
+      simulateProcessing();
+
+      try {
+        const response = await fetch('/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            job_description: ui.jobDescription.value,
+            candidates: state.candidates
+          })
+        });
+
+        if (!response.ok) throw new Error('Analyze failed');
+
+        const result = await response.json();
+        state.ranked = result.ranked_list;
+        state.averages = result.dataset_average;
+        state.ranked.forEach(candidate => state.detailCache.set(candidate.id, candidate));
+
+        ui.progressBar.style.width = '100%';
+        ui.agents.querySelectorAll('.agent').forEach(agent => agent.classList.add('done'));
+        ui.statusText.textContent = `Ranked ${state.ranked.length} candidates in ${result.processing_time}s`;
+        renderCandidateList();
+        ui.results.classList.remove('hidden');
+        setTimeout(() => showCandidateDetail(state.ranked[0].id), 150);
+      } catch (error) {
+        ui.statusText.textContent = 'Analysis failed: check dataset format.';
+      }
+    }
+
+    function renderSignalTags(candidate) {
+      const signals = candidate.india_signals || {};
+      const tags = [
+        signals.self_taught ? '🇮🇳 Self-Taught' : '',
+        signals.career_switcher ? 'Career Switcher' : '',
+        signals.service_to_product_switch ? 'Service→Product' : '',
+        signals.tier2_tier3_city ? 'Tier-2/3 City' : ''
+      ].filter(Boolean);
+      return tags.map(tag => `<span class="pill tagpill">${tag}</span>`).join('');
+    }
+
+    function renderTopScorePills(candidate) {
+      const scores = candidate.agent_scores;
+      return Object.entries({
+        Skill: scores.skill_score,
+        Velocity: scores.velocity_score,
+        Problem: scores.problem_score,
+        Comms: scores.communication_score,
+        Potential: scores.potential_score
+      })
+        .sort((left, right) => right[1] - left[1])
+        .slice(0, 2)
+        .map(([label, score]) => `<span class="pill">${label} ${score}</span>`)
+        .join('');
+    }
+
+    function renderCandidateList() {
+      ui.candidateList.innerHTML = state.ranked.map(candidate => `
+        <div class="card" data-candidate-id="${candidate.id}">
+          <div class="row">
+            <div>
+              <b>#${candidate.rank} ${candidate.name}</b>
+              <p class="muted">${candidate.city}, ${candidate.state}</p>
+            </div>
+            <div>
+              <div class="score">${candidate.final_score}</div>
+              <span class="tier ${candidate.tier}">${candidate.tier}</span>
+            </div>
+          </div>
+          ${renderTopScorePills(candidate)}
+          <p>${candidate.prediction}</p>
+          ${renderSignalTags(candidate)}
+        </div>
+      `).join('');
+
+      ui.candidateList.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('click', () => showCandidateDetail(card.dataset.candidateId));
+      });
+    }
+
+    async function getCandidateDetail(candidateId) {
+      if (state.detailCache.has(candidateId)) {
+        return state.detailCache.get(candidateId);
+      }
+
+      const response = await fetch(`/candidate/${encodeURIComponent(candidateId)}`);
+      if (!response.ok) throw new Error('Candidate detail is not cached yet');
+      const detail = await response.json();
+      state.detailCache.set(candidateId, detail);
+      return detail;
+    }
+
+    async function showCandidateDetail(candidateId) {
+      try {
+        const candidate = await getCandidateDetail(candidateId);
+        renderCandidateDetail(candidate);
+      } catch (error) {
+        ui.detailPanel.innerHTML = '<div class="empty">Run Analyze Candidates, then select a candidate.</div>';
+      }
+    }
+
+    function renderCandidateDetail(candidate) {
+      ui.candidateList.querySelectorAll('.card').forEach(card => {
+        card.classList.toggle('active', card.dataset.candidateId === candidate.id);
+      });
+
+      const confidence = candidate.hire_confidence === 'high'
+        ? 'Hire with confidence'
+        : candidate.hire_confidence === 'medium'
+          ? 'Strong consideration'
+          : 'Further evaluation needed';
+
+      ui.detailPanel.innerHTML = `
+        <div class="row">
+          <div>
+            <h2>${candidate.name}</h2>
+            <p class="muted">${candidate.current_role} • ${candidate.city} • ${candidate.experience_years} years</p>
+          </div>
+          <span class="confidence">${confidence}</span>
+        </div>
+        <div class="bigscore">${candidate.final_score}</div>
+        <span class="tier ${candidate.tier}">${candidate.tier}</span>
+        <canvas id="radar" width="420" height="360"></canvas>
+        <p style="white-space: pre-line">${candidate.explanation}</p>
+        <h3>Key strengths</h3>
+        ${(candidate.key_strengths || []).slice(0, 3).map(item => `<span class="pill good">${item}</span>`).join('')}
+        <div>${(candidate.red_flags || []).map(item => `<span class="pill bad">${item}</span>`).join('')}</div>
+        <h3>India signals</h3>
+        ${renderSignalTags(candidate)}
+        <h3>Agent score bars</h3>
+        <div class="scores">${renderScoreBars(candidate)}</div>
+      `;
+
+      setTimeout(() => {
+        ui.detailPanel.querySelectorAll('.scorebar span').forEach(bar => {
+          bar.style.width = `${bar.dataset.width}%`;
+        });
+      }, 50);
+      drawRadar(candidate);
+    }
+
+    function renderScoreBars(candidate) {
+      const scores = candidate.agent_scores;
+      return [
+        ['Skill', scores.skill_score],
+        ['Velocity', scores.velocity_score],
+        ['Problem', scores.problem_score],
+        ['Communication', scores.communication_score],
+        ['Potential', scores.potential_score]
+      ].map(([label, score]) => `
+        <div class="scorebar">
+          <label><b>${label}</b><em>${score}</em></label>
+          <div class="bar"><span data-width="${score}"></span></div>
+        </div>
+      `).join('');
+    }
+
+    function drawRadar(candidate) {
+      const canvas = document.getElementById('radar');
+      const context = canvas.getContext('2d');
+      const labels = ['Skill', 'Velocity', 'Problem', 'Communication', 'Potential'];
+      const values = [candidate.skill_score, candidate.velocity_score, candidate.problem_score, candidate.communication_score, candidate.potential_score];
+      const benchmark = [state.averages.skill_score, state.averages.velocity_score, state.averages.problem_score, state.averages.communication_score, state.averages.potential_score];
+      const centerX = 210;
+      const centerY = 180;
+      const radius = 120;
+      const startAngle = -Math.PI / 2;
+
+      function points(scores, scale = 1) {
+        return scores.map((score, index) => {
+          const angle = startAngle + index * 2 * Math.PI / 5;
+          const distance = radius * (score / 100) * scale;
+          return [centerX + Math.cos(angle) * distance, centerY + Math.sin(angle) * distance];
+        });
+      }
+
+      function polygon(pointsToDraw, fill, stroke) {
+        context.beginPath();
+        pointsToDraw.forEach((point, index) => {
+          if (index === 0) context.moveTo(point[0], point[1]);
+          else context.lineTo(point[0], point[1]);
+        });
+        context.closePath();
+        if (fill) {
+          context.fillStyle = fill;
+          context.fill();
+        }
+        context.strokeStyle = stroke;
+        context.lineWidth = 2;
+        context.stroke();
+      }
+
+      function frame(elapsed) {
+        const progress = Math.min(1, elapsed / 500);
+        const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+        context.clearRect(0, 0, 420, 360);
+
+        for (let grid = 1; grid <= 4; grid += 1) {
+          polygon(points([25 * grid, 25 * grid, 25 * grid, 25 * grid, 25 * grid]), null, 'rgba(255,255,255,0.08)');
+        }
+
+        polygon(points(benchmark), null, 'rgba(255,255,255,0.25)');
+        polygon(points(values, easeOutQuart), 'rgba(59,130,246,0.25)', '#3b82f6');
+
+        context.fillStyle = getComputedStyle(document.body).getPropertyValue('--text');
+        context.font = '12px Inter';
+        context.textAlign = 'center';
+        labels.forEach((label, index) => {
+          const angle = startAngle + index * 2 * Math.PI / 5;
+          const x = centerX + Math.cos(angle) * (radius + 34);
+          const y = centerY + Math.sin(angle) * (radius + 34);
+          context.fillText(label, x, y);
+          context.fillText(Math.round(values[index]), x, y + 15);
+        });
+
+        if (elapsed < 500) {
+          requestAnimationFrame(nextTimestamp => frame(nextTimestamp - startTimestamp));
+        }
+      }
+
+      const startTimestamp = performance.now();
+      requestAnimationFrame(timestamp => frame(timestamp - startTimestamp));
+    }
+  </script>
+</body>
+</html>
