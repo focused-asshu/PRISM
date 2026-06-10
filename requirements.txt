@@ -1,0 +1,13 @@
+# PRISM is cloud-safe and runs without downloading packages.
+# The app includes local fallbacks for FastAPI, uvicorn, SBERT, and textstat.
+# Run with: ./uvicorn main:app --reload
+
+# Optional production stack, if your cloud allows package downloads:
+# fastapi>=0.110.0
+# uvicorn[standard]>=0.27.0
+# sentence-transformers>=2.6.0
+# anthropic>=0.25.0
+# pandas>=2.0.0
+# numpy>=1.24.0
+# textstat>=0.7.3
+# python-multipart>=0.0.9
